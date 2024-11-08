@@ -105,12 +105,36 @@ app.get("/api/sales", async (req, res) => {
     const salesRef = ref(database, "sales");
     const snapshot = await get(salesRef);
 
-    if (snapshot.exists()) {
-      const salesData = snapshot.val();
-      res.status(200).json(salesData);
-    } else {
-      res.status(404).json({ message: "No hay ventas registradas." });
+    if (!snapshot.exists()) {
+      return res.status(404).json({ message: "No hay ventas registradas." });
     }
+
+    const salesData = snapshot.val();
+
+    // Leer el archivo products.json
+    const filePath = path.join(__dirname, "products.json");
+    fs.readFile(filePath, "utf-8", (err, data) => {
+      if (err) {
+        console.error("Error reading products.json:", err);
+        return res.status(500).send("Error reading file");
+      }
+
+      const productsData = JSON.parse(data).products;
+
+      // Añadir detalles del producto a cada venta, excluyendo las imágenes
+      const salesWithProductDetails = Object.values(salesData).map(
+        (sale: any) => {
+          const product = productsData.find((p) => p.id === sale.productId);
+          if (product) {
+            const { images, ...productWithoutImage } = product;
+            return { ...sale, product: productWithoutImage };
+          }
+          return sale; // Devolver la venta sin detalles del producto si no se encuentra
+        }
+      );
+
+      res.status(200).json(salesWithProductDetails);
+    });
   } catch (error) {
     console.error("Error al obtener las ventas:", error);
     res.status(500).json({ error: "Error al obtener las ventas." });
