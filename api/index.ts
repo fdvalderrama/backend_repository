@@ -49,14 +49,15 @@ const productsPath = path.join(__dirname, "products.json");
 const products = JSON.parse(fs.readFileSync(productsPath, "utf-8"));
 
 app.get("/api/items/:id", (req, res) => {
-  const productId = req.params.id;
-  const product = products.find((p) => p.id === productId);
+  const productId = parseInt(req.params.id, 10);
 
-  if (product) {
-    res.json(product);
-  } else {
-    res.status(404).json({ error: "Product not found" });
+  const product = productsPath.products.find((p) => p.id === productId);
+
+  if (!product) {
+    return res.status(404).json({ error: "Producto no encontrado" });
   }
+
+  res.json(product);
 });
 
 app.listen(3000, () => console.log("Server ready on port 3000."));
