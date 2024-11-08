@@ -45,20 +45,29 @@ app.get("/api/items", (req, res) => {
   });
 });
 
-const productsPath = path.join(__dirname, "products.json");
-const products = JSON.parse(fs.readFileSync(productsPath, "utf-8"));
-
 app.get("/api/items/:id", (req, res) => {
-  const productId = req.params.id;
-  const product = products.find((p) => p.id === productId);
+  const productId = parseInt(req.params.id, 10);
+  const filePath = path.join(__dirname, "products.json");
 
-  if (product) {
-    // Crear una copia del producto sin la propiedad de imagen
-    const { images, ...productWithoutImage } = product;
-    res.json(productWithoutImage);
-  } else {
-    res.status(404).json({ error: "Product not found" });
-  }
+  fs.readFile(filePath, "utf-8", (err, data) => {
+    if (err) {
+      console.error("Error reading products.json:", err);
+      return res.status(500).send("Error reading file");
+    }
+
+    const productsData = JSON.parse(data);
+
+    // Buscar el producto por id
+    const product = productsData.products.find((p) => p.id === productId);
+
+    if (product) {
+      // Excluir la imagen en la respuesta
+      const { thumbnail, image, ...productWithoutImage } = product;
+      res.json(productWithoutImage);
+    } else {
+      res.status(404).json({ error: "Product not found" });
+    }
+  });
 });
 
 app.listen(3000, () => console.log("Server ready on port 3000."));
