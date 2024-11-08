@@ -3,8 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 const app = express();
-const { ref, push, set } = require("firebase/database");
-const database = require("./firebaseConfig");
+//const { ref, push, set } = require("firebase/database");
+//const database = require("./firebaseConfig");
 
 app.use(cors());
 //app.use(express.json());
@@ -74,7 +74,7 @@ app.get("/api/items/:id", (req, res) => {
 });
 
 // Ruta para agregar una venta en Firebase
-app.post("/api/addSale", (req, res) => {
+/*app.post("/api/addSale", (req, res) => {
   const { productId } = req.body;
 
   if (!productId) {
@@ -104,7 +104,7 @@ app.post("/api/addSale", (req, res) => {
         .status(500)
         .json({ error: "Error al agregar la venta en la base de datos." });
     });
-});
+});*/
 
 app.listen(3000, () => console.log("Server ready on port 3000."));
 
