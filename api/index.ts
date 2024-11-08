@@ -6,7 +6,7 @@ const app = express();
 app.get("/", (req, res) => res.send("Express on Vercel"));
 
 app.get("/getAll", (req, res) => {
-  const filePath = path.join(__dirname, "productos.json");
+  const filePath = path.join(__dirname, "products.json");
 
   fs.readFile(filePath, "utf-8", (err, data) => {
     if (err) {
