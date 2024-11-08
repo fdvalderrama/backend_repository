@@ -3,8 +3,11 @@ const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 const app = express();
+const { ref, push, set } = require("firebase/database");
+const database = require("./firebaseConfig");
 
 app.use(cors());
+app.use(express.json());
 
 app.get("/", (req, res) => res.send("Express on Vercel"));
 
@@ -62,12 +65,45 @@ app.get("/api/items/:id", (req, res) => {
 
     if (product) {
       // Excluir la imagen en la respuesta
-      const { thumbnail, image, ...productWithoutImage } = product;
+      const { images, ...productWithoutImage } = product;
       res.json(productWithoutImage);
     } else {
       res.status(404).json({ error: "Product not found" });
     }
   });
+});
+
+// Ruta para agregar una venta en Firebase
+app.post("/api/addSale", (req, res) => {
+  const { productId } = req.body;
+
+  if (!productId) {
+    return res
+      .status(400)
+      .json({ error: "El campo 'productId' es requerido." });
+  }
+
+  // Crear una referencia a la ubicación de las ventas en la base de datos
+  const salesRef = ref(database, "sales");
+  const newSaleRef = push(salesRef); // Crear una nueva clave única para la venta
+
+  // Crear el objeto de venta con el ID del producto y la fecha actual
+  const saleData = {
+    productId,
+    date: new Date().toISOString(), // Formato de fecha ISO (datetime)
+  };
+
+  // Insertar la nueva venta en Firebase
+  set(newSaleRef, saleData)
+    .then(() => {
+      res.status(201).json({ message: "Venta añadida exitosamente." });
+    })
+    .catch((error) => {
+      console.error("Error al agregar la venta:", error);
+      res
+        .status(500)
+        .json({ error: "Error al agregar la venta en la base de datos." });
+    });
 });
 
 app.listen(3000, () => console.log("Server ready on port 3000."));
