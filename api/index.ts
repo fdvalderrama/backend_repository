@@ -5,6 +5,13 @@ const cors = require("cors");
 const app = express();
 
 app.use(cors());
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; connect-src 'self';"
+  );
+  next();
+});
 
 app.get("/", (req, res) => res.send("Express on Vercel"));
 
