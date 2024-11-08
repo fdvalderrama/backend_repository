@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 const app = express();
-const { ref, push, set } = require("firebase/database");
+const { ref, push, set, get } = require("firebase/database");
 const database = require("./firebaseConfig");
 
 app.use(cors());
@@ -60,11 +60,9 @@ app.get("/api/items/:id", (req, res) => {
 
     const productsData = JSON.parse(data);
 
-    // Buscar el producto por id
     const product = productsData.products.find((p) => p.id === productId);
 
     if (product) {
-      // Excluir la imagen en la respuesta
       const { images, ...productWithoutImage } = product;
       res.json(productWithoutImage);
     } else {
@@ -73,7 +71,6 @@ app.get("/api/items/:id", (req, res) => {
   });
 });
 
-// Ruta para agregar una venta en Firebase
 app.post("/api/addSale", (req, res) => {
   const { productId } = req.body;
 
@@ -83,17 +80,14 @@ app.post("/api/addSale", (req, res) => {
       .json({ error: "El campo 'productId' es requerido." });
   }
 
-  // Crear una referencia a la ubicación de las ventas en la base de datos
   const salesRef = ref(database, "sales");
-  const newSaleRef = push(salesRef); // Crear una nueva clave única para la venta
+  const newSaleRef = push(salesRef);
 
-  // Crear el objeto de venta con el ID del producto y la fecha actual
   const saleData = {
     productId,
-    date: new Date().toISOString(), // Formato de fecha ISO (datetime)
+    date: new Date().toISOString(),
   };
 
-  // Insertar la nueva venta en Firebase
   set(newSaleRef, saleData)
     .then(() => {
       res.status(201).json({ message: "Venta añadida exitosamente." });
@@ -104,6 +98,23 @@ app.post("/api/addSale", (req, res) => {
         .status(500)
         .json({ error: "Error al agregar la venta en la base de datos." });
     });
+});
+
+app.get("/api/sales", async (req, res) => {
+  try {
+    const salesRef = ref(database, "sales");
+    const snapshot = await get(salesRef);
+
+    if (snapshot.exists()) {
+      const salesData = snapshot.val();
+      res.status(200).json(salesData);
+    } else {
+      res.status(404).json({ message: "No hay ventas registradas." });
+    }
+  } catch (error) {
+    console.error("Error al obtener las ventas:", error);
+    res.status(500).json({ error: "Error al obtener las ventas." });
+  }
 });
 
 app.listen(3000, () => console.log("Server ready on port 3000."));
